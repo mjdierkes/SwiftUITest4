@@ -1,0 +1,22 @@
+name: SwiftUITest4
+options:
+  bundleIdPrefix: com.seedinnovate
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  SwiftUITest4:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleName: SwiftUITest4
+        CFBundleIdentifier: com.seedinnovate.swiftuitest4
+        UILaunchStoryboardName: LaunchScreen
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false

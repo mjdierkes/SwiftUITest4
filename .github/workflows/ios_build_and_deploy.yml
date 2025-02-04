@@ -1,0 +1,75 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  XCODE_VERSION: '14.2'
+  DEVELOPER_DIR: /Applications/Xcode_14.2.app/Contents/Developer
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache Homebrew
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            ~/Library/Caches/Homebrew/downloads
+          key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/ios_build_and_deploy.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-brew-
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Cache Swift packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            .build
+            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages/checkouts
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Cache DerivedData
+        uses: actions/cache@v3
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-derived-data-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-derived-data-
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build iOS App
+        run: |
+          xcodebuild clean build \
+            -project SwiftUITest4.xcodeproj \
+            -scheme SwiftUITest4 \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 14,OS=16.2' \
+            -configuration Debug \
+            -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: debug-build
+          path: ~/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+          retention-days: 5
